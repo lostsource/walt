@@ -18,10 +18,10 @@
 (function() {
     'use strict';
 
-    // These steps were totally unintentional :)
     var _ = require('underscore'),
         fs = require('fs'),
         path = require('path'),
+        util = require('util'),
         common = require('./common.js'),
         manifest = require('./manifest.js');
 
@@ -58,12 +58,10 @@
 
     /**
      * Initializes BuildJS and loads plugins.
-     * 
+     *
      * @private
      */
     BuildJS.prototype.init = function() {
-        console.log(this.PLUGIN_DIR);
-
         fs.readdir(this.PLUGIN_DIR, this.e(function(files) {
             files.forEach(function(file) {
                 var pluginPath = path.join(this.PLUGIN_DIR, file);
@@ -140,11 +138,31 @@
         });
 
         if (applicablePlugins.length > 0) {
+            // apply the applicable plugins on file data
             fs.readFile(file, 'utf8', this.e(function(data) {
-                applicablePlugins.forEach(function(plugin) {
-                    data = plugin.onFile(data);
+                var self = this,
+                    shadow = this.shadowPath(file),
+                    apply = function(pos, callback) {
+                        if (pos === applicablePlugins.length) {
+                            callback();
+                            return;
+                        }
+
+                        applicablePlugins[pos].onFile(data, function(newData) {
+                            data = newData;
+                            apply(++pos, callback);
+                        });
+                    };
+
+                apply(0, function() {
+                    self.mkdirParents(path.dirname(shadow), function() {
+                        fs.writeFile(shadow, data, self.e());
+                    });
                 });
             }));
+        } else {
+            // just copy file to destination dir
+            this.copyFile(file, this.shadowPath(file));
         }
     };
 
@@ -152,6 +170,11 @@
      * @private
      */
     BuildJS.prototype.e = common.e;
+
+    /**
+     * @private
+     */
+    BuildJS.prototype.separator = common.separator;
 
     /**
      * @private
@@ -164,10 +187,75 @@
         }) !== undefined;
     };
 
-    var build = new BuildJS('src', 'out', ['js/lib']);
-    //build.run();
+    /**
+     * @param source Source file name
+     * @param destination Destination file name
+     *
+     * @private
+     */
+    BuildJS.prototype.copyFile = function(source, destination) {
+        this.mkdirParents(path.dirname(destination), function() {
+            fs.stat(source, this.e(function(stats) {
+                var read = fs.createReadStream(source),
+                    write = fs.createWriteStream(destination, {mode: stats.mode});
 
-    //build.closure('src/js/background.js');
+                write.once('open', function() {
+                    util.pump(read, write, function() {
+                        read.destroy();
+                        write.destroy();
+                    });
+                });
+            }));
+        });
+    };
+
+    /**
+     * Creates a directory including its parents if they don't exist
+     * like the UNIX command mkdir -p
+     *
+     * @private
+     */
+    BuildJS.prototype.mkdirParents = function(dir, callback) {
+        var self = this,
+            parts = path.normalize(dir).split(this.separator()),
+            mkdir = function(pos) {
+                var curr;
+
+                if (pos === parts.length) {
+                    callback.call(self);
+                    return;
+                }
+
+                curr = parts.slice(0, pos + 1).join(self.separator());
+
+                path.exists(curr, function(exists) {
+                    if (!exists) {
+                        fs.mkdir(curr, self.e(function() {
+                            mkdir(++pos);
+                        }));
+                    } else {
+                        mkdir(++pos);
+                    }
+                });
+            };
+
+        mkdir(0);
+    };
+
+    /**
+     * Returns the equivalent path of the source file
+     * in the destination directory.
+     *
+     * src/somefolder/somefile.js -> dst/somefolder/somefile.js
+     *
+     * @private
+     */
+    BuildJS.prototype.shadowPath = function(file) {
+        return path.join(this.destination, file.substring(this.source.length));
+    };
+
+    var build = new BuildJS('test', 'out', []);
+    build.run();
 
     /*var fs = require('fs'),
         lint = require('./build/jslint.js'),

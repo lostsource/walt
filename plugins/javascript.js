@@ -12,8 +12,12 @@
         this.errors = [];
     }
 
-    BuildJS_JavaScript.prototype.onFile = function(data) {
+    /**
+     * @param callback Is a function(data)
+     */
+    BuildJS_JavaScript.prototype.onFile = function(data, callback) {
         // TODO
+        callback(data);
     };
 
     /**
@@ -93,6 +97,8 @@
         name: 'JavaScript',
         version: '0.0.1',
         fileTypes: ['js'],
-        provider: BuildJS_JavaScript
+        provider: function() {
+            return new BuildJS_JavaScript();
+        }
     };
 }());

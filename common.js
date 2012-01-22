@@ -25,7 +25,7 @@
                 if (_(self.errors).isArray()) {
                     self.errors.push(err);
                 }
-            } else {
+            } else if (_(callback).isFunction()) {
                 // arguments is an object not an array so we need to convert it
                 for (i = 1; i < arguments.length; i++) {
                     args.push(arguments[i]);
@@ -34,6 +34,13 @@
                 callback.apply(self, args);
             }
         };
+    };
+
+    /**
+     * Returns system file separator.
+     */
+    module.exports.separator = function() {
+        return (process.platform === 'win32' ? '\\' : '/');
     };
 
 }());
