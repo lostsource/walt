@@ -1,5 +1,5 @@
 /*jslint white: true, nomen: true, indent: 4*/
-/*globals require*/
+/*globals require, console, exports*/
 (function() {
     'use strict';
 
@@ -16,8 +16,10 @@
      * @param callback Is a function(data)
      */
     BuildJS_JavaScript.prototype.onFile = function(data, callback) {
-        // TODO
-        callback(data);
+        this.closure(data, function(result) {
+            // TODO: Validate result (errors?)
+            callback(result.compiledCode);
+        });
     };
 
     /**
@@ -28,7 +30,7 @@
     /**
      * @private
      */
-    BuildJS_JavaScript.prototype.javascript = function(file) {
+    /*BuildJS_JavaScript.prototype.javascript = function(file) {
         console.log('=== Running JSLint on ' + file + ' ===\n');
         var content = fs.readFileSync(file, 'utf-8'),
             result = lint.JSLINT(content);
@@ -42,7 +44,7 @@
         } else {
             console.log('    OK\n');
         }
-    };
+    };*/
 
     /**
      * Applys Google Closure Compiler on JavaScript file.
@@ -52,45 +54,43 @@
      *
      * @private
      */
-    BuildJS_JavaScript.prototype.closure = function(file, callback) {
-        fs.readFile(file, 'utf8', this.e(function(contents) {
-            var body = qs.stringify({
-                    js_code: contents,
-                    compilation_level: 'SIMPLE_OPTIMIZATIONS',
-                    output_format: 'json',
-                    output_info: 'compiled_code'
-                }),
+    BuildJS_JavaScript.prototype.closure = function(data, callback) {
+        var body = qs.stringify({
+                js_code: data,
+                compilation_level: 'SIMPLE_OPTIMIZATIONS',
+                output_format: 'json',
+                output_info: 'compiled_code'
+            }),
 
-                req = http.request({
-                    host: 'closure-compiler.appspot.com',
-                    path: '/compile',
-                    method: 'POST',
-                    headers: {
-                        'Content-Length': body.length,
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                }, function(res) {
-                    var data = '';
-
-                    res.setEncoding('utf8');
-
-                    res.on('data', function(chunk) {
-                        data += chunk;
-                    });
-
-                    res.on('end', function() {
-                        var json = JSON.parse(data);
-                        callback(data);
-                    });
+            req = http.request({
+                host: 'closure-compiler.appspot.com',
+                path: '/compile',
+                method: 'POST',
+                headers: {
+                    'Content-Length': body.length,
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
-            );
+            }, function(res) {
+                var result = '';
 
-            req.on('error', function(err) {
-                console.error(err);
-            });
+                res.setEncoding('utf8');
 
-            req.end(body);
-        }));
+                res.on('data', function(chunk) {
+                    result += chunk;
+                });
+
+                res.on('end', function() {
+                    var json = JSON.parse(result);
+                    callback(json);
+                });
+            }
+        );
+
+        req.on('error', function(err) {
+            console.error(err);
+        });
+
+        req.end(body);
     };
 
     exports.MANIFEST = {

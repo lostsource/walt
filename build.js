@@ -3,10 +3,11 @@
 /*global require, console, __dirname*/
 
 /**
- * node.js based build script for static web pages, Google Chrome extensions etc.
- * which parses a directory structure, runs checks and compilations/minifications
- * on JavaScript and CSS files and finally creates a packaged version of the web
- * app in an output directory.
+ * BuildJS is a simple node.js based build tool for static web apps, Google Chrome
+ * extensions etc. It parses a directory structure, runs checks and
+ * compilations/minifications on JavaScript and CSS files and finally creates a
+ * packaged version of the web app in an output directory while the source contents
+ * stays untouched.
  *
  * Non-standard dependencies:
  *   - underscore (1.3.0)
@@ -42,7 +43,7 @@
         this.PLUGIN_DIR = path.join(__dirname, "plugins");
         this.source = source;
         this.destination = destination;
-        this.ignore = ignore !== undefined ? ignore : [];
+        this.ignore = _(ignore).isArray() ? ignore : [];
         this.pluginManifests = [];
         this.errors = [];
 
@@ -254,41 +255,9 @@
         return path.join(this.destination, file.substring(this.source.length));
     };
 
+    // TODO: Parse command line
+
     var build = new BuildJS('test', 'out', []);
     build.run();
 
-    /*var fs = require('fs'),
-        lint = require('./build/jslint.js'),
-        DIR = 'src/js';
-
-    fs.readdir(DIR, function (err, files) {
-        if (err) {
-            console.error(err);
-        } else {
-            var overall = true;
-            files.forEach(function (file) {
-                var path = DIR + '/' + file;
-                var stats = fs.statSync(path);
-                if (stats.isFile() && /\.js$/.test(file)) {
-                    console.log('=== Running JSLint on ' + path + ' ===\n');
-                    var content = fs.readFileSync(path, 'utf-8');
-                    var result = lint.JSLINT(content);
-                    overall &= result;
-                    if (!result) {
-                        lint.JSLINT.errors.forEach(function (err) {
-                            console.log('    line: ' + err.line);
-                            console.log('    character: ' + err.character);
-                            console.log('    reason: ' + err.reason + '\n');
-                        });
-                    } else {
-                        console.log('    OK\n');
-                    }
-                }
-            });
-
-            if (overall) {
-                console.log('All OK. You rock!');
-            }
-        }
-    });*/
 }());
