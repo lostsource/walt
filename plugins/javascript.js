@@ -55,6 +55,11 @@
      * @private
      */
     BuildJS_JavaScript.prototype.closure = function(data, callback) {
+        // TODO:
+        // It seems the Closure API doesn't return any info when there is an error
+        // and output_info has been set to 'compiled_code'. Instead we have to
+        // send another request with output_info == 'errors'?
+        
         var body = qs.stringify({
                 js_code: data,
                 compilation_level: 'SIMPLE_OPTIMIZATIONS',

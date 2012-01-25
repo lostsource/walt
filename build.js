@@ -22,7 +22,7 @@
     var _ = require('underscore'),
         fs = require('fs'),
         path = require('path'),
-        util = require('util'),
+        events = require('events'),
         common = require('./common.js'),
         manifest = require('./manifest.js');
 
@@ -46,15 +46,29 @@
         this.ignore = _(ignore).isArray() ? ignore : [];
         this.pluginManifests = [];
         this.errors = [];
+        this.initialized = false;
 
         this.init();
     }
+
+    // Extend from EventEmitter
+    BuildJS.prototype = new events.EventEmitter;
 
     /**
      * Runs the build process.
      */
     BuildJS.prototype.run = function() {
-        this.dir(this.source);
+        var self = this, 
+            run = function() {
+                self.dir(self.source);
+            };
+
+        if (this.initialized) {
+            run();
+        } else {
+            // Begin once I'm initialized
+            this.once('initialized', run);
+        }
     };
 
     /**
@@ -86,6 +100,9 @@
                     }
                 }));
             }, this);
+
+            this.initialized = true;
+            this.emit('initialized');
         }));
     };
 
@@ -120,7 +137,8 @@
      */
     BuildJS.prototype.file = function(file) {
         var extension = path.extname(file),
-            applicablePlugins = [];
+            applicablePlugins = [],
+            shadowPath;
 
         if (this.matchIgnored(file)) {
             return;
@@ -131,38 +149,49 @@
                 return (fileType === extension || ('.' + fileType) === extension);
             }) !== undefined) {
                 try {
-                    applicablePlugins.push(manifest.provider());
+                    applicablePlugins.push({
+                        manifest: manifest,
+                        instance: manifest.provider()
+                    });
                 } catch (e) {
                     console.error('Error while instantiating plugin ' + manifest.toString(manifest) + ': ' + e);
                 }
             }
         });
 
+        shadowPath = this.shadowPath(file);
+
         if (applicablePlugins.length > 0) {
             // apply the applicable plugins on file data
             fs.readFile(file, 'utf8', this.e(function(data) {
                 var self = this,
-                    shadow = this.shadowPath(file),
                     apply = function(pos, callback) {
+                        var plugin;
+
                         if (pos === applicablePlugins.length) {
                             callback();
                             return;
                         }
 
-                        applicablePlugins[pos].onFile(data, function(newData) {
+                        plugin = applicablePlugins[pos];
+
+                        console.log("[APPLY " + plugin.manifest.name + "] " + file);
+
+                        plugin.instance.onFile(data, function(newData) {
                             data = newData;
                             apply(++pos, callback);
                         });
                     };
 
                 apply(0, function() {
-                    self.mkdirParents(path.dirname(shadow), function() {
-                        fs.writeFile(shadow, data, self.e());
+                    self.mkdirParents(path.dirname(shadowPath), function() {
+                        fs.writeFile(shadowPath, data, self.e());
                     });
                 });
             }));
         } else {
             // just copy file to destination dir
+            console.log("[COPY] " + file);
             this.copyFile(file, this.shadowPath(file));
         }
     };
@@ -199,11 +228,14 @@
             fs.stat(source, this.e(function(stats) {
                 var read = fs.createReadStream(source),
                     write = fs.createWriteStream(destination, {mode: stats.mode});
-
+                
                 write.once('open', function() {
-                    util.pump(read, write, function() {
-                        read.destroy();
-                        write.destroy();
+                    read.on('data', function(buffer) {
+                        write.write(buffer);
+                    });
+
+                    read.on('end', function() {
+                        write.end();
                     });
                 });
             }));
