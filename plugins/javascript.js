@@ -8,11 +8,27 @@
         common = require('../common.js'),
         lint = require('./javascript/jslint.js');
 
+    /**
+     * JavaScript plugin for BuildJS
+     *
+     * @author Sven Jacobs <mail@svenjacobs.com>
+     * @version 0.0.1
+     */
     function BuildJS_JavaScript() {
-        this.errors = [];
     }
 
     /**
+     * Will be called when a JavaScript file needs to be processed.
+     *
+     * Once the process is finished the callback function needs to be called
+     * passing an object with the following properties:
+     *
+     * data (String, required)               The modified file content
+     * warnings (Array of Strings, optional) Warning messages 
+     * errors (Array of Strings, optional)   Error messages
+     *
+     *
+     * @param data The file's contents
      * @param callback Is a function(data)
      */
     BuildJS_JavaScript.prototype.onFile = function(data, callback) {
@@ -55,17 +71,14 @@
      * @private
      */
     BuildJS_JavaScript.prototype.closure = function(data, callback) {
-        // TODO:
-        // It seems the Closure API doesn't return any info when there is an error
-        // and output_info has been set to 'compiled_code'. Instead we have to
-        // send another request with output_info == 'errors'?
-        
         var body = qs.stringify({
                 js_code: data,
                 compilation_level: 'SIMPLE_OPTIMIZATIONS',
-                output_format: 'json',
-                output_info: 'compiled_code'
-            }),
+                output_format: 'json'
+            }) + '&output_info=compiled_code'
+               + '&output_info=warnings'
+               + '&output_info=errors'
+               + '&output_info=statistics',
 
             req = http.request({
                 host: 'closure-compiler.appspot.com',
