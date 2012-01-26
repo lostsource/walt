@@ -47,6 +47,7 @@
         this.pluginManifests = [];
         this.errors = [];
         this.initialized = false;
+        this.aborted = false;
 
         this.init();
     }
@@ -113,22 +114,37 @@
      */
     BuildJS.prototype.dir = function(dir) {
         fs.readdir(dir, this.e(function(files) {
-            files.forEach(function(file) {
-                // Ignore files/directories starting with a dot
-                if (_(file).startsWith('.')) {
-                    return;
+            var i,
+                file,
+                joined;
+
+            for (i = 0; i < files.length; i++) {
+                if (this.aborted) {
+                    break;
                 }
 
-                var joined = path.join(dir, file);
+                file = files[i];
 
-                fs.stat(joined, this.e(function(stats) {
-                    if (stats.isDirectory()) {
-                        this.dir(joined);
-                    } else if (stats.isFile()) {
-                        this.file(joined);
+                // Ignore files/directories starting with a dot
+                if (_(file).startsWith('.')) {
+                    continue;
+                }
+
+                joined = path.join(dir, file);
+
+                fs.stat(joined, this.e((function(joined) {
+                    // We're using a self-invoking function here
+                    // because we want to retain the state of "joined"
+                    // from the outer context
+                    return function(stats) {
+                        if (stats.isDirectory()) {
+                            this.dir(joined);
+                        } else if (stats.isFile()) {
+                            this.file(joined);
+                        }
                     }
-                }));
-            }, this);
+                }(joined))));
+            }
         }));
     };
 
@@ -177,10 +193,20 @@
 
                         console.log("[APPLY " + plugin.manifest.name + "] " + file);
 
-                        plugin.instance.onFile(data, function(newData) {
-                            data = newData;
-                            apply(++pos, callback);
-                        });
+                        plugin.instance.onFile(data, self.timeout(
+                            // Success
+                            function(newData) {
+                                data = newData;
+                                apply(++pos, callback);
+                            },
+                            // Timeout
+                            function() {
+                                console.error('[!TIMEOUT ' + plugin.manifest.name + '] ' + file);
+                                self.abort();
+                            },
+                            10000,
+                            self
+                        ));
                     };
 
                 apply(0, function() {
@@ -285,6 +311,40 @@
      */
     BuildJS.prototype.shadowPath = function(file) {
         return path.join(this.destination, file.substring(this.source.length));
+    };
+
+    /**
+     * Provides a safe way of handling callback functions and timeouts.
+     * If the given timeout is hit the onTimeout function will be called.
+     *
+     * @param callback The original callback function
+     * @param onTimeout Function which will be called on timeout
+     * @param timeout Milliseconds after onTimeout will be called
+     * @param context Optional context of callback functions
+     *
+     * @private
+     */
+    BuildJS.prototype.timeout = function(callback, onTimeout, timeout, context) {
+        var called = false,
+            timer = setTimeout(function() {
+                if (!called) {
+                    called = true;
+                    onTimeout.call(context !== undefined ? context : this);
+                }
+            }, timeout);
+
+        return function() {
+            if (!called) {
+                called = true;
+                clearTimeout(timer);
+                callback.apply(context !== undefined ? context : this, arguments);
+            }
+        };
+    };
+
+    BuildJS.prototype.abort = function() {
+        this.aborted = true;
+        this.emit('aborted');
     };
 
     // TODO: Parse command line
