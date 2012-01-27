@@ -187,7 +187,7 @@
                                     self.abort();
                                     return;
                                 } else if (result.warnings) {
-                                    console.log(this.logline('WARNING', plugin.manifest.name, '%s: %s'), file, result.warnings.toString());
+                                    console.log(self.logline('WARNING', plugin.manifest.name, '%s: %s'), file, result.warnings.toString());
                                 }
 
                                 data = result.data;
