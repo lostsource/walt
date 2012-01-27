@@ -1,4 +1,4 @@
-/*jslint white: true, nomen: true, indent: 4*/
+/*jslint white: true, nomen: true, regexp: true, indent: 4*/
 /*globals require, console, exports*/
 (function() {
     'use strict';
@@ -15,6 +15,7 @@
      * @version 0.0.1
      */
     function BuildJS_JavaScript() {
+        this.SHEBANG_REGEX = /^#!.*$/m;
     }
 
     /**
@@ -23,19 +24,76 @@
      * Once the process is finished the callback function needs to be called
      * passing an object with the following properties:
      *
-     * data (String, required)               The modified file content
-     * warnings (Array of Strings, optional) Warning messages 
-     * errors (Array of Strings, optional)   Error messages
+     * data (String, required)     The modified file contents
+     * warnings (Object, optional) Warning messages
+     * errors (Object, optional)   Error messages
      *
+     * warnings and errors can be be arbitrary objects when specified
+     * (for example arrays of Strings) however if you want some
+     * meaningful output you should overwrite the toString() function of
+     * your objects. If errors has been specified the whole build will be
+     * cancelled.
      *
      * @param data The file's contents
      * @param callback Is a function(data)
      */
     BuildJS_JavaScript.prototype.onFile = function(data, callback) {
+        // Make sure we strip a shebang for validation/compilation
+        // and prepend it again later
+        var self = this,
+            shebang = null,
+            matches = this.SHEBANG_REGEX.exec(data);
+
+        if (matches !== null) {
+            shebang = matches[0];
+            data = data.replace(this.SHEBANG_REGEX, '');
+        }
+        
         this.closure(data, function(result) {
-            // TODO: Validate result (errors?)
-            callback(result.compiledCode);
+            callback({
+                data: shebang ? shebang + '\n' + result.compiledCode : result.compiledCode,
+                errors: self.mixinToString(result.serverErrors, self.serverErrorsToString) || self.mixinToString(result.errors, self.errorsToString) || null,
+                warnings: result.warnings || null
+            });
         });
+    };
+
+    /**
+     * @private
+     */
+    BuildJS_JavaScript.prototype.mixinToString = function(obj, func) {
+        if (obj === undefined) {
+            return undefined;
+        }
+
+        obj.toString = func;
+        return obj;
+    };
+
+    /**
+     * @private
+     */
+    BuildJS_JavaScript.prototype.serverErrorsToString = function() {
+        var out = '';
+        
+        this.forEach(function(error) {
+            out += 'Code: ' + error.code + ', Error: ' + error.error + '\n';
+        });
+
+        return out;
+    };
+    
+    /**
+     * @private
+     */
+    BuildJS_JavaScript.prototype.errorsToString = function() {
+        var out = '';
+        
+        this.forEach(function(error) {
+            out += 'Line: ' + error.lineno + ', Char: ' + error.charno + ', Error: ' + error.error + '\n';
+        });
+
+        return out;
     };
 
     /**

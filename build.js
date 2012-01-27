@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*jslint white: true, plusplus: true, nomen: true, indent: 4*/
-/*global require, console, __dirname*/
+/*global require, console, __dirname, process, setTimeout, clearTimeout*/
 
 /**
  * BuildJS is a simple node.js based build tool for static web apps, Google Chrome
@@ -40,20 +40,21 @@
      *               For example: ['js/3rdparty', 'js/badcode.js']
      */
     function BuildJS(source, destination, ignore) {
-        this.PLUGIN_DIR = path.join(__dirname, "plugins");
-        this.source = source;
-        this.destination = destination;
+        this.VERSION = '0.0.1';
+        this.PLUGIN_DIR = path.join(__dirname, 'plugins');
+        this.PLUGIN_TIMEOUT = 10000;
+        this.source = path.normalize(source);
+        this.destination = path.normalize(destination);
         this.ignore = _(ignore).isArray() ? ignore : [];
         this.pluginManifests = [];
         this.errors = [];
         this.initialized = false;
-        this.aborted = false;
 
         this.init();
     }
 
     // Extend from EventEmitter
-    BuildJS.prototype = new events.EventEmitter;
+    BuildJS.prototype = new events.EventEmitter();
 
     /**
      * Runs the build process.
@@ -63,6 +64,8 @@
             run = function() {
                 self.dir(self.source);
             };
+
+        console.log(this.logline('INFO', 'BuildJS version %s started'), this.VERSION);
 
         if (this.initialized) {
             run();
@@ -91,12 +94,14 @@
 
                             if (manifest.isValid(plugin.MANIFEST)) {
                                 this.pluginManifests.push(plugin.MANIFEST);
-                                console.log('Loaded plugin ' + manifest.toString(plugin.MANIFEST));
+                                console.log(this.logline('INFO', 'Loaded plugin %s'), manifest.toString(plugin.MANIFEST));
                             } else {
-                                console.error('Invalid plugin ' + pluginPath + ': Missing or invalid manifest');
+                                console.error(this.logline('!ERROR', 'Invalid plugin %s: Missing or invalid manifest'), pluginPath);
+                                this.abort();
                             }
                         } catch (e) {
-                            console.error('Error while loading plugin ' + pluginPath + ':\n' + e);
+                            console.error(this.logline('!ERROR', 'Error while loading plugin %s: %s'), pluginPath, e.toString());
+                            this.abort();
                         }
                     }
                 }));
@@ -114,37 +119,22 @@
      */
     BuildJS.prototype.dir = function(dir) {
         fs.readdir(dir, this.e(function(files) {
-            var i,
-                file,
-                joined;
-
-            for (i = 0; i < files.length; i++) {
-                if (this.aborted) {
-                    break;
-                }
-
-                file = files[i];
-
+            files.forEach(function(file) {
                 // Ignore files/directories starting with a dot
                 if (_(file).startsWith('.')) {
-                    continue;
+                    return;
                 }
 
-                joined = path.join(dir, file);
+                var joined = path.join(dir, file);
 
-                fs.stat(joined, this.e((function(joined) {
-                    // We're using a self-invoking function here
-                    // because we want to retain the state of "joined"
-                    // from the outer context
-                    return function(stats) {
-                        if (stats.isDirectory()) {
-                            this.dir(joined);
-                        } else if (stats.isFile()) {
-                            this.file(joined);
-                        }
+                fs.stat(joined, this.e(function(stats) {
+                    if (stats.isDirectory()) {
+                        this.dir(joined);
+                    } else if (stats.isFile()) {
+                        this.file(joined);
                     }
-                }(joined))));
-            }
+                }));
+            }, this);
         }));
     };
 
@@ -156,10 +146,6 @@
             applicablePlugins = [],
             shadowPath;
 
-        if (this.matchIgnored(file)) {
-            return;
-        }
-
         this.pluginManifests.forEach(function(manifest) {
             if (_.find(manifest.fileTypes, function(fileType) {
                 return (fileType === extension || ('.' + fileType) === extension);
@@ -170,14 +156,14 @@
                         instance: manifest.provider()
                     });
                 } catch (e) {
-                    console.error('Error while instantiating plugin ' + manifest.toString(manifest) + ': ' + e);
+                    console.error(this.logline('!ERROR', 'Error while instantiating plugin %s: %s'), manifest.toString(manifest), e.toString());
                 }
             }
         });
 
         shadowPath = this.shadowPath(file);
 
-        if (applicablePlugins.length > 0) {
+        if (!this.matchIgnored(file) && applicablePlugins.length > 0) {
             // apply the applicable plugins on file data
             fs.readFile(file, 'utf8', this.e(function(data) {
                 var self = this,
@@ -191,20 +177,28 @@
 
                         plugin = applicablePlugins[pos];
 
-                        console.log("[APPLY " + plugin.manifest.name + "] " + file);
+                        console.log(self.logline('APPLY', plugin.manifest.name, '%s -> %s'), file, shadowPath);
 
                         plugin.instance.onFile(data, self.timeout(
                             // Success
-                            function(newData) {
-                                data = newData;
+                            function(result) {
+                                if (result.errors) {
+                                    console.error(self.logline('!ERROR', plugin.manifest.name, '%s: %s'), file, result.errors.toString());
+                                    self.abort();
+                                    return;
+                                } else if (result.warnings) {
+                                    console.log(this.logline('WARNING', plugin.manifest.name, '%s: %s'), file, result.warnings.toString());
+                                }
+
+                                data = result.data;
                                 apply(++pos, callback);
                             },
                             // Timeout
                             function() {
-                                console.error('[!TIMEOUT ' + plugin.manifest.name + '] ' + file);
+                                console.error(self.logline('!TIMEOUT', plugin.manifest.name, file));
                                 self.abort();
                             },
-                            10000,
+                            self.PLUGIN_TIMEOUT,
                             self
                         ));
                     };
@@ -217,8 +211,8 @@
             }));
         } else {
             // just copy file to destination dir
-            console.log("[COPY] " + file);
-            this.copyFile(file, this.shadowPath(file));
+            console.log(this.logline('COPY', '%s -> %s'), file, shadowPath);
+            this.copyFile(file, shadowPath);
         }
     };
 
@@ -289,9 +283,9 @@
 
                 path.exists(curr, function(exists) {
                     if (!exists) {
-                        fs.mkdir(curr, self.e(function() {
+                        fs.mkdir(curr, function() {
                             mkdir(++pos);
-                        }));
+                        });
                     } else {
                         mkdir(++pos);
                     }
@@ -310,7 +304,7 @@
      * @private
      */
     BuildJS.prototype.shadowPath = function(file) {
-        return path.join(this.destination, file.substring(this.source.length));
+        return path.join(this.destination, path.normalize(file).substring(this.source.length));
     };
 
     /**
@@ -342,14 +336,46 @@
         };
     };
 
+    /**
+     * @private
+     */
     BuildJS.prototype.abort = function() {
-        this.aborted = true;
-        this.emit('aborted');
+        process.exit(1);
     };
 
-    // TODO: Parse command line
+    /**
+     * @private
+     */
+    BuildJS.prototype.logline = function() {
+        if (arguments.length === 2) {
+            return '[' + arguments[0].toUpperCase() + '] ' + arguments[1];
+        } else if (arguments.length === 3) {
+            return '[' + arguments[0].toUpperCase() + ' ' + arguments[1] + '] ' + arguments[2];
+        } else {
+            throw 'Illegal argument count';
+        }
+    };
 
-    var build = new BuildJS('test', 'out', []);
-    build.run();
+
+
+
+    if (process.argv.length < 4) {
+        console.log('Usage: build.js SOURCE DESTINATION [IGNORE...]\n');
+        console.log('SOURCE      Source directory.');
+        console.log('DESTINATION Destination directory.');
+        console.log('IGNORE      Any further argument is a relative path (file or directory)');
+        console.log('            as seen from SOURCE which should be ignored for validation/compilation.');
+        console.log('            However these files are still copied to DESTINATION.');
+        process.exit(1);
+    }
+
+    var ignore = [],
+        i;
+
+    for (i = 4; i < process.argv.length; i++) {
+        ignore.push(process.argv[i]);
+    }
+
+    new BuildJS(process.argv[2], process.argv[3], ignore).run();
 
 }());
