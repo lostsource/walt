@@ -53,7 +53,7 @@
             callback({
                 data: shebang ? shebang + '\n' + result.compiledCode : result.compiledCode,
                 errors: self.mixinToString(result.serverErrors, self.serverErrorsToString) || self.mixinToString(result.errors, self.errorsToString) || null,
-                warnings: result.warnings || null
+                warnings: self.mixinToString(result.warnings, self.warningsToString) || null
             });
         });
     };
@@ -91,6 +91,19 @@
         
         this.forEach(function(error) {
             out += 'Line: ' + error.lineno + ', Char: ' + error.charno + ', Error: ' + error.error + '\n';
+        });
+
+        return out;
+    };
+
+    /**
+     * @private
+     */
+    BuildJS_JavaScript.prototype.warningsToString = function() {
+        var out = '';
+        
+        this.forEach(function(warning) {
+            out += 'Line: ' + warning.lineno + ', Char: ' + warning.charno + ', Warning: ' + warning.warning + '\n';
         });
 
         return out;
