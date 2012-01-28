@@ -323,7 +323,7 @@
             timer = setTimeout(function() {
                 if (!called) {
                     called = true;
-                    onTimeout.call(context !== undefined ? context : this);
+                    onTimeout.call(context || this);
                 }
             }, timeout);
 
@@ -331,7 +331,7 @@
             if (!called) {
                 called = true;
                 clearTimeout(timer);
-                callback.apply(context !== undefined ? context : this, arguments);
+                callback.apply(context || this, arguments);
             }
         };
     };
