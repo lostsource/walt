@@ -64,3 +64,8 @@ generated/copied. Files from SOURCE **will not** be modified.
 However these files are still copied to DESTINATION. This is especially useful
 for third party libraries whose code you are not responsible for ;-)
 
+Development
+-----------
+
+See the [Wiki](https://github.com/svenjacobs/BuildJS/wiki/) for some information on
+how to develop plugins for BuildJS.
