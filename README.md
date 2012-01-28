@@ -7,6 +7,8 @@ and compilations/minifications on JavaScript and CSS files and finally creates a
 packaged version of the web app in an output directory while the source contents
 stays untouched.
 
+![BuildJS in action](http://svenjacobs.github.com/BuildJS/buildjs.png "BuildJS in action")
+
 Installation
 ------------
 
