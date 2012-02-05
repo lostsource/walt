@@ -91,7 +91,7 @@
 
         this.loadConfig(locations, function (config) {
             if (config === null) {
-                console.error(this.logline('ERROR', 'Couldn\'t load configuarion'));
+                console.error(this.logline('ERROR', 'Couldn\'t load configuration'));
                 this.abort();
             }
 
