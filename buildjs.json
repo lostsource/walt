@@ -4,6 +4,8 @@
 // working directory.
 
 {
+    // Plugin specific configuration
+
     "plugins": {
         "javascript": {
             "enabled": true
@@ -11,5 +13,13 @@
         "css": {
             "enabled": true
         }
-    }
+    },
+
+    // Array of relative paths to files or directories as seen from the source
+    // directory which should be ignored for validation/minification. However these
+    // files are still copied. Same as the IGNORE command line option and can be
+    // used in conjunction with it.
+
+    "ignore": [
+    ]
 }

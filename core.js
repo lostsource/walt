@@ -83,18 +83,18 @@
         var locations = [
             path.join(__dirname, 'buildjs.json'),
             path.join(this.homeDir(), '.buildjs.json'),
-            path.join(process.cwd(), 'buildjs.json')
+            //path.join(process.cwd(), 'buildjs.json'),
+            path.join(this.source, 'buildjs.json')
         ];
 
-        this.getConfig(locations, function (config) {
+        this.loadConfig(locations, function (config) {
             if (config === null) {
                 console.error(this.logline('ERROR', 'Couldn\'t load configuarion'));
                 this.abort();
             }
 
             this.config = config;
-
-            console.log(require('util').inspect(this.config));
+            this.ignore = this.ignore.concat(config.ignore || []);
 
             fs.readdir(this.PLUGIN_DIR, this.e(function (files) {
                 files.forEach(function (file) {
@@ -144,7 +144,8 @@
                 var joined = path.join(dir, file);
 
                 fs.stat(joined, this.e(function (stats) {
-                    if (stats.isDirectory()) {
+                    // Dive into directory unless it's the output directory
+                    if (stats.isDirectory() && joined !== this.destination) {
                         this.dir(joined);
                     } else if (stats.isFile()) {
                         this.file(joined);
@@ -158,7 +159,8 @@
      * @private
      */
     BuildJS.prototype.file = function (file) {
-        var extension = path.extname(file),
+        var self = this,
+            extension = path.extname(file),
             applicablePlugins = [],
             shadowPath;
 
@@ -166,13 +168,15 @@
             if (_.find(manifest.fileTypes, function (fileType) {
                 return (fileType === extension || ('.' + fileType) === extension);
             }) !== undefined) {
-                try {
-                    applicablePlugins.push({
-                        manifest: manifest,
-                        instance: manifest.provider()
-                    });
-                } catch (e) {
-                    console.error(this.logline('!ERROR', 'Error while instantiating plugin %s: %s'), manifest.toString(manifest), e.toString());
+                if (self.pluginConfig(manifest.name).enabled === true) {
+                    try {
+                        applicablePlugins.push({
+                            manifest: manifest,
+                            instance: manifest.provider()
+                        });
+                    } catch (e) {
+                        console.error(self.logline('!ERROR', 'Error while instantiating plugin %s: %s'), manifest.toString(manifest), e.toString());
+                    }
                 }
             }
         });
@@ -182,8 +186,7 @@
         if (!this.matchIgnored(file) && applicablePlugins.length > 0) {
             // apply the applicable plugins on file data
             fs.readFile(file, 'utf8', this.e(function (data) {
-                var self = this,
-                    apply = function (pos, callback) {
+                var apply = function (pos, callback) {
                         var plugin;
 
                         if (pos === applicablePlugins.length) {
@@ -195,23 +198,39 @@
 
                         console.log(self.logline('APPLY', plugin.manifest.name, '%s -> %s'), file, shadowPath);
 
-                        plugin.instance.onFile(data, self.timeout(
+                        plugin.instance.init(self.pluginConfig(plugin.manifest.name), self.timeout(
                             // Success
-                            function (result) {
-                                if (result.errors) {
-                                    console.error(self.logline('!ERROR', plugin.manifest.name, '%s: %s'), file, result.errors.toString());
-                                    self.abort();
-                                    return;
-                                } else if (result.warnings) {
-                                    console.log(self.logline('WARNING', plugin.manifest.name, '%s: %s'), file, result.warnings.toString());
-                                }
+                            function (err) {
+                                if (err) {
+                                    console.error(self.logline('!ERROR', plugin.manifest.name, 'Error during initialization: %s'), err.toString());
+                                } else {
+                                    plugin.instance.onFile(data, self.timeout(
+                                        // Success
+                                        function (result) {
+                                            if (result.errors) {
+                                                console.error(self.logline('!ERROR', plugin.manifest.name, '%s: %s'), file, result.errors.toString());
+                                                self.abort();
+                                                return;
+                                            } else if (result.warnings) {
+                                                console.log(self.logline('WARNING', plugin.manifest.name, '%s: %s'), file, result.warnings.toString());
+                                            }
 
-                                data = result.data;
-                                apply(++pos, callback);
+                                            data = result.data;
+                                            apply(++pos, callback);
+                                        },
+                                        // Timeout
+                                        function () {
+                                            console.error(self.logline('!TIMEOUT', plugin.manifest.name, file));
+                                            self.abort();
+                                        },
+                                        self.PLUGIN_TIMEOUT,
+                                        self
+                                    ));
+                                }
                             },
                             // Timeout
                             function () {
-                                console.error(self.logline('!TIMEOUT', plugin.manifest.name, file));
+                                console.error(self.logline('!TIMEOUT', plugin.manifest.name, 'Timeout during plugin initialization'));
                                 self.abort();
                             },
                             self.PLUGIN_TIMEOUT,
@@ -386,7 +405,7 @@
      *
      * @private
      */
-    BuildJS.prototype.getConfig = function (locations, callback) {
+    BuildJS.prototype.loadConfig = function (locations, callback) {
         var get,
             config = null,
             self = this;
@@ -442,6 +461,19 @@
         };
 
         get(0);
+    };
+
+    /**
+     * @private
+     */
+    BuildJS.prototype.pluginConfig = function (pluginName) {
+        pluginName = pluginName.toLowerCase();
+
+        if (this.config.plugins && this.config.plugins[pluginName]) {
+            return this.config.plugins[pluginName];
+        } else {
+            return null;
+        }
     };
 
     /**

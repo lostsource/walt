@@ -10,11 +10,28 @@
      * JavaScript plugin for BuildJS
      *
      * @author Sven Jacobs <mail@svenjacobs.com>
-     * @version 0.0.1
+     * @version 0.0.2
      */
     function BuildJS_JavaScript() {
         this.SHEBANG_REGEX = /^#!.*$/m;
+        this.options = null;
     }
+
+    /**
+     * Is called during plugin initialization.
+     *
+     * The options arguments is an object with plugin options.
+     * The callback needs to be called once the plugin has been initialized.
+     * If there has been an error during initialization an error object needs
+     * to be passed to the callback function.
+     *
+     * @param options Plugin options object
+     * @param callback Callback function with optional error argument
+     */
+    BuildJS_JavaScript.prototype.init = function (options, callback) {
+        this.options = options;
+        callback();
+    };
 
     /**
      * Will be called when a JavaScript file needs to be processed.
@@ -163,7 +180,7 @@
 
     exports.MANIFEST = {
         name: 'JavaScript',
-        version: '0.0.1',
+        version: '0.0.2',
         fileTypes: ['js'],
         provider: function () {
             return new BuildJS_JavaScript();

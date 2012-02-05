@@ -15,7 +15,8 @@ Installation
 ### Prerequisites
 
 * node.js (version 0.6.8 or greater) and [npm](http://npmjs.org/) need to be installed on your system and the executables placed in your `PATH` environment.
-* Latest version of BuildJS.
+* git in `PATH`
+* Download the latest version of BuildJS
 
 ### Linux/UNIX
 
@@ -23,12 +24,13 @@ Put all files from the archive in a directory, e.g. `/opt/buildjs` and add the
 directory to your `PATH` environment variable. Make sure `build.js` has the
 executable flag set.
 
-You can either install BuildJS's dependencies globally or in the installation
-directory (recommended). In the installation directory execute the following
-commands:
+Change to the installation directory and execute the command
 
-    npm install underscore
-    npm install underscore.string
+    .\setup.js
+
+Dependencies will now be installed. Note that currently this command
+requires `git` to be installed because a dependency is not yet available in the
+npm registry.
 
 That's it! Executing `build.js` should now display the command line options.
 
@@ -37,12 +39,13 @@ That's it! Executing `build.js` should now display the command line options.
 Put all files from the archive in a directory, e.g. `C:\Program Files\BuildJS`
 and add the directory to your `PATH` environment variable.
 
-You can either install BuildJS's dependencies globally or in the installation
-directory (recommended). In the installation directory execute the following
-commands:
+Change to the installation directory and execute the command
 
-    npm install underscore
-    npm install underscore.string
+    node.exe setup.js
+
+Dependencies will now be installed. Note that currently this command
+requires `git` to be installed because a dependency is not yet available in the
+npm registry.
 
 That's it! Log out and in again for the `PATH` changes to take effect. Executing
 `buildjs` (or `buildjs.bat`) should now display the command line options.
@@ -64,7 +67,22 @@ generated/copied. Files from SOURCE **will not** be modified.
 **IGNORE** are optional arguments. Any further argument represents a relative path
 (file or directory) as seen from SOURCE which should be ignored for validation/compilation.
 However these files are still copied to DESTINATION. This is especially useful
-for third party libraries whose code you are not responsible for ;-)
+for third party libraries whose code you are not responsible for ;-) Also see the
+"ignore" option in the configuration file.
+
+### Configuration files
+
+The behaviour of BuildJS can be additionally tweaked with configuration files.
+BuildJS is looking for files in the following directories and order:
+
+* `INSTALLDIR/buildjs.json` where `INSTALLDIR` is the installation directory of BuildJS
+* `HOME/.buildjs.json` where `HOME` is the home directory of the user
+* `SRC/buildjs.json` where `SRC` is the source directory specified at the command line
+
+If multiple files are found they will be merged where latter files overwrite options
+of former ones.
+
+See `INSTALLDIR/buildjs.json` for a sample configuration.
 
 Development
 -----------
