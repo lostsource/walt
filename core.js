@@ -1,4 +1,4 @@
-/*jshint browser: true, node: true, plusplus: false, nomen: false, indent: 4*/
+/*jshint browser: true, node: true, plusplus: false, nomen: false, onevar: true, regexp: false, indent: 4*/
 
 /**
  * BuildJS is a simple node.js based build tool for static web apps, Google Chrome
@@ -46,6 +46,7 @@
         this.ignore = _(ignore).isArray() ? ignore : [];
         this.pluginManifests = [];
         this.errors = [];
+        this.config = null;
         this.initialized = false;
 
         this.init();
@@ -79,35 +80,52 @@
      * @private
      */
     BuildJS.prototype.init = function () {
-        fs.readdir(this.PLUGIN_DIR, this.e(function (files) {
-            files.forEach(function (file) {
-                var pluginPath = path.join(this.PLUGIN_DIR, file);
+        var locations = [
+            path.join(__dirname, 'buildjs.json'),
+            path.join(this.homeDir(), '.buildjs.json'),
+            path.join(process.cwd(), 'buildjs.json')
+        ];
 
-                fs.stat(pluginPath, this.e(function (stats) {
-                    var plugin;
+        this.getConfig(locations, function (config) {
+            if (config === null) {
+                console.error(this.logline('ERROR', 'Couldn\'t load configuarion'));
+                this.abort();
+            }
 
-                    if (stats.isFile() && _(pluginPath).endsWith('.js')) {
-                        try {
-                            plugin = require(pluginPath);
+            this.config = config;
 
-                            if (manifest.isValid(plugin.MANIFEST)) {
-                                this.pluginManifests.push(plugin.MANIFEST);
-                                console.log(this.logline('INFO', 'Loaded plugin %s'), manifest.toString(plugin.MANIFEST));
-                            } else {
-                                console.error(this.logline('!ERROR', 'Invalid plugin %s: Missing or invalid manifest'), pluginPath);
+            console.log(require('util').inspect(this.config));
+
+            fs.readdir(this.PLUGIN_DIR, this.e(function (files) {
+                files.forEach(function (file) {
+                    var pluginPath = path.join(this.PLUGIN_DIR, file);
+
+                    fs.stat(pluginPath, this.e(function (stats) {
+                        var plugin;
+
+                        if (stats.isFile() && _(pluginPath).endsWith('.js')) {
+                            try {
+                                plugin = require(pluginPath);
+
+                                if (manifest.isValid(plugin.MANIFEST)) {
+                                    this.pluginManifests.push(plugin.MANIFEST);
+                                    console.log(this.logline('INFO', 'Loaded plugin %s'), manifest.toString(plugin.MANIFEST));
+                                } else {
+                                    console.error(this.logline('!ERROR', 'Invalid plugin %s: Missing or invalid manifest'), pluginPath);
+                                    this.abort();
+                                }
+                            } catch (e) {
+                                console.error(this.logline('!ERROR', 'Error while loading plugin %s: %s'), pluginPath, e.toString());
                                 this.abort();
                             }
-                        } catch (e) {
-                            console.error(this.logline('!ERROR', 'Error while loading plugin %s: %s'), pluginPath, e.toString());
-                            this.abort();
                         }
-                    }
-                }));
-            }, this);
+                    }));
+                }, this);
 
-            this.initialized = true;
-            this.emit('initialized');
-        }));
+                this.initialized = true;
+                this.emit('initialized');
+            }));
+        });
     };
 
     /**
@@ -355,16 +373,22 @@
     };
 
     /**
-     * Gets first encounter of configuration file in specified paths
+     * Gets config from specified paths and merges config objects if
+     * several config files exists.
+     *
+     * For example there may be configs in
+     *  - /usr/local/buildjs/buildjs.json       (the install dir of buildjs)
+     *  - /home/walt/.buildjs.json              (the users home directory)
+     *  - /home/walt/dev/myproject/buildjs.json (the current working directory)
      *
      * @param locations Array of locations for configuration files
-     * @param callback A function (data)
+     * @param callback A function (config)
      *
      * @private
      */
     BuildJS.prototype.getConfig = function (locations, callback) {
-        var index = 0,
-            get,
+        var get,
+            config = null,
             self = this;
 
         if (!_(locations).isArray()) {
@@ -376,32 +400,56 @@
             var loc;
 
             if (i === locations.length) {
-                callback(null);
+                callback.call(self, config);
                 return;
             }
 
-
             loc = path.normalize(locations[i]);
 
-            fs.stat(loc, self.e(function (stats) {
-                if (stats.isFile()) {
-                    try {
-                        fs.readFile(loc, 'utf8', self.e(function (data) {
-                            callback(JSON.parse(data));
-                        }));
-                    } catch (e) {
-                        console.error(self.logline('ERROR', e.toString()));
-                        get(++index);
-                    }
-                } else {
-                    get(++index);
+            path.exists(loc, function (exists) {
+                if (!exists) {
+                    get(++i);
+                    return;
                 }
-            }));
+
+                fs.stat(loc, self.e(function (stats) {
+                    if (stats.isFile()) {
+                        try {
+                            fs.readFile(loc, 'utf8', self.e(function (data) {
+                                console.log(self.logline('INFO', 'Loading config from %s'), loc);
+                               
+                                // remove all comments
+                                data = data.replace(/(\/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)|(\/\/.*)/g, '');
+                                var other = JSON.parse(data);
+
+                                if (config === null) {
+                                    config = other;
+                                } else {
+                                    config = require('cloneextend').extend(config, other); // merge objects
+                                }
+
+                                get(++i);
+                            }));
+                        } catch (e) {
+                            console.error(self.logline('ERROR', e.toString()));
+                            get(++i);
+                        }
+                    } else {
+                        get(++i);
+                    }
+                }));
+            });
         };
 
         get(0);
     };
 
+    /**
+     * @private
+     */
+    BuildJS.prototype.homeDir = function () {
+        return process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'];
+    };
 
     exports.BuildJS = BuildJS;
 

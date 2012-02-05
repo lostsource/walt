@@ -1,10 +1,15 @@
+// DO NOT MODIFY!
+// This is the default configuration of BuildJS. If you need to make modifications
+// copy this file into ~/.buildjs.json and/or as "buildjs.json" into the project's
+// working directory.
+
 {
-    plugins: {
-        javascript: {
-            enabled: true
+    "plugins": {
+        "javascript": {
+            "enabled": true
         },
-        css: {
-            enabled: true
+        "css": {
+            "enabled": true
         }
     }
 }
