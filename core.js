@@ -8,8 +8,10 @@
  * stays untouched.
  *
  * Non-standard dependencies:
- *   - underscore (1.3.0)
- *   - underscore.string (2.0.0)
+ *
+ *   - underscore @ 1.3.1
+ *   - underscore.string @ 2.0.0
+ *   - cloneextend @ 0.0.2
  *
  * @author Sven Jacobs <mail@svenjacobs.com>
  * @version 0.0.2
