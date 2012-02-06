@@ -26,7 +26,7 @@ executable flag set.
 
 Change to the installation directory and execute the command
 
-    .\setup.js
+    .\setup-buildjs.js
 
 Dependencies will now be installed. Note that currently this command
 requires `git` to be installed because a dependency is not yet available in the
@@ -41,7 +41,7 @@ and add the directory to your `PATH` environment variable.
 
 Change to the installation directory and execute the command
 
-    node.exe setup.js
+    node.exe setup-buildjs.js
 
 Dependencies will now be installed. Note that currently this command
 requires `git` to be installed because a dependency is not yet available in the
