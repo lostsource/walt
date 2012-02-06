@@ -12,6 +12,9 @@
         },
         "css": {
             "enabled": true
+        },
+        "html": {
+            "enabled": true
         }
     },
 

@@ -14,7 +14,7 @@
  *   - cloneextend @ 0.0.2
  *
  * @author Sven Jacobs <mail@svenjacobs.com>
- * @version 0.0.2
+ * @version 0.0.3
  */
 (function () {
     'use strict';
@@ -40,7 +40,7 @@
      *               For example: ['js/3rdparty', 'js/badcode.js']
      */
     function BuildJS(source, destination, ignore) {
-        this.VERSION = '0.0.2';
+        this.VERSION = '0.0.3';
         this.PLUGIN_DIR = path.join(__dirname, 'plugins');
         this.PLUGIN_TIMEOUT = 10000;
         this.source = path.normalize(source);
