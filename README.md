@@ -12,43 +12,19 @@ stays untouched.
 Installation
 ------------
 
-### Prerequisites
+node.js (version 0.6.8 or greater) and [npm](http://npmjs.org/) need to be installed
+on your system and the executables placed in your `PATH` environment.
 
-* node.js (version 0.6.8 or greater) and [npm](http://npmjs.org/) need to be installed on your system and the executables placed in your `PATH` environment.
-* git in `PATH`
-* Download the latest version of BuildJS
+BuildJS is available in the npm registry which makes installing it super simple.
+Just execute the command
 
-### Linux/UNIX
+    npm install buildjs -g
 
-Put all files from the archive in a directory, e.g. `/opt/buildjs` and add the
-directory to your `PATH` environment variable. Make sure `build.js` has the
-executable flag set.
+to install BuildJS as a global command. Execute BuildJS with the command
 
-Change to the installation directory and execute the command
+    buildjs
 
-    .\setup-buildjs.js
-
-Dependencies will now be installed. Note that currently this command
-requires `git` to be installed because a dependency is not yet available in the
-npm registry.
-
-That's it! Executing `build.js` should now display the command line options.
-
-### Windows
-
-Put all files from the archive in a directory, e.g. `C:\Program Files\BuildJS`
-and add the directory to your `PATH` environment variable.
-
-Change to the installation directory and execute the command
-
-    node.exe setup-buildjs.js
-
-Dependencies will now be installed. Note that currently this command
-requires `git` to be installed because a dependency is not yet available in the
-npm registry.
-
-That's it! Log out and in again for the `PATH` changes to take effect. Executing
-`buildjs` (or `buildjs.bat`) should now display the command line options.
+Under Windows you may need to run it as `buildjs.cmd`.
 
 Usage
 -----
