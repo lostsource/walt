@@ -1,0 +1,44 @@
+{
+    "name": "buildjs",
+    "version": "0.1.0",
+    "description": "Simple build tool for static web apps, Google Chrome extensions etc.",
+    "homepage": "https://github.com/svenjacobs/BuildJS",
+    "bugs": "https://github.com/svenjacobs/BuildJS/issues",
+    "author": {
+        "name": "Sven Jacobs",
+        "email": "mail@svenjacobs.com",
+        "web": "http://svenjacobs.com/"
+    },
+    "keywords": [
+        "cli",
+        "build",
+        "make",
+        "tool",
+        "minify",
+        "uglify",
+        "compress",
+        "validate",
+        "javascript",
+        "css",
+        "html"
+    ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/svenjacobs/BuildJS.git"
+        }
+    ],
+    "main": "./lib/core.js",
+    "bin": "./bin/buildjs.js",
+    "dependencies": {
+        "underscore": "~1.3.1",
+        "underscore.string": "~2.0.0"
+    },
+    "engines": {
+        "node": ">=0.6.8"
+    },
+    "preferGlobal": true,
+    "scripts": {
+        "test": "node ./test/test-merge.js"
+    }
+}

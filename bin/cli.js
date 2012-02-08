@@ -2,7 +2,7 @@
 /*jshint browser: true, node: true, plusplus: false*/
 
 (function () {
-    var core = require('./core.js'),
+    var buildjs = require('../lib/build.js'),
         ignore = [],
         i;
 
@@ -20,5 +20,5 @@
         ignore.push(process.argv[i]);
     }
 
-    new core.BuildJS(process.argv[2], process.argv[3], ignore).run();
+    new buildjs.BuildJS(process.argv[2], process.argv[3], ignore).run();
 }());
