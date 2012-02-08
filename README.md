@@ -15,12 +15,16 @@ Installation
 node.js (version 0.6.8 or greater) and [npm](http://npmjs.org/) need to be installed
 on your system and the executables placed in your `PATH` environment.
 
-BuildJS is available in the npm registry which makes installing it super simple.
-Just execute the command
+BuildJS is availabe as a npm module. Unfortunately another module with the name
+"buildjs" already exists (I chose the name before I thought about npm support) so
+BuildJS currently can only be installed manually with
 
+    git clone https://github.com/svenjacobs/BuildJS.git buildjs
     npm install buildjs -g
 
-to install BuildJS as a global command. Execute BuildJS with the command
+until I've found a new name.
+
+Execute BuildJS with the command
 
     buildjs
 
@@ -32,7 +36,7 @@ Usage
 Using BuildJS is very simple. The application has only two required command line
 options and a third optional one:
 
-    build.js SOURCE DESTINATION [IGNORE...]
+    buildjs SOURCE DESTINATION [IGNORE...]
 
 **SOURCE** is the source directory of your static web application containing the
 HTML, JavaScript, CSS, image files etc.
