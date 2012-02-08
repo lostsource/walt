@@ -17,10 +17,9 @@ on your system and the executables placed in your `PATH` environment.
 
 BuildJS is availabe as a npm module. Unfortunately another module with the name
 "buildjs" already exists (I chose the name before I thought about npm support) so
-BuildJS currently can only be installed manually with
+BuildJS currently can only be installed without using the npm registry by executing
 
-    git clone https://github.com/svenjacobs/BuildJS.git buildjs
-    npm install buildjs -g
+    npm install git://github.com/svenjacobs/BuildJS.git -g
 
 until I've found a new name.
 
