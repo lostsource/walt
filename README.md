@@ -1,13 +1,13 @@
-BuildJS
-=======
+Walt
+====
 
-BuildJS is a simple [node.js](http://nodejs.org/) based build tool for static web
+Walt is a simple [node.js](http://nodejs.org/) based build tool for static web
 apps, Google Chrome extensions etc. It parses a directory structure, runs checks
 and compilations/minifications on JavaScript and CSS files and finally creates a
 packaged version of the web app in an output directory while the source contents
 stays untouched.
 
-![BuildJS in action](http://svenjacobs.github.com/BuildJS/buildjs.png "BuildJS in action")
+![Walt in action](http://svenjacobs.github.com/walt/buildjs.png "Walt in action")
 
 Installation
 ------------
@@ -15,27 +15,24 @@ Installation
 node.js (version 0.6.8 or greater) and [npm](http://npmjs.org/) need to be installed
 on your system and the executables placed in your `PATH` environment.
 
-BuildJS is availabe as a npm module. Unfortunately another module with the name
-"buildjs" already exists (I chose the name before I thought about npm support) so
-BuildJS currently can only be installed without using the npm registry by executing
+Walt is availabe as a npm module which makes installing it super simple. Just run
+the command
 
-    npm install git://github.com/svenjacobs/BuildJS.git -g
+    npm install walt -g
 
-until I've found a new name.
+Execute Walt with the command
 
-Execute BuildJS with the command
+    walt
 
-    buildjs
-
-Under Windows you may need to run it as `buildjs.cmd`.
+Under Windows you may need to run it as `walt.cmd`.
 
 Usage
 -----
 
-Using BuildJS is very simple. The application has only two required command line
+Using Walt is very simple. The application has only two required command line
 options and a third optional one:
 
-    buildjs SOURCE DESTINATION [IGNORE...]
+    walt SOURCE DESTINATION [IGNORE...]
 
 **SOURCE** is the source directory of your static web application containing the
 HTML, JavaScript, CSS, image files etc.
@@ -51,20 +48,30 @@ for third party libraries whose code you are not responsible for ;-) Also see th
 
 ### Configuration files
 
-The behaviour of BuildJS can be additionally tweaked with configuration files.
-BuildJS is looking for files in the following directories and order:
+The behaviour of Walt can be additionally tweaked with configuration files.
+Walt is looking for files in the following directories and order:
 
-* `INSTALLDIR/buildjs.json` where `INSTALLDIR` is the installation directory of BuildJS
-* `HOME/.buildjs.json` where `HOME` is the home directory of the user
-* `SRC/buildjs.json` where `SRC` is the source directory specified at the command line
+* `INSTALLDIR/walt.json` where `INSTALLDIR` is the installation directory of Walt
+* `HOME/.walt.json` where `HOME` is the home directory of the user
+* `SRC/walt.json` where `SRC` is the source directory specified at the command line
 
 If multiple files are found they will be merged where latter files overwrite options
 of former ones.
 
-See `INSTALLDIR/buildjs.json` for a sample configuration.
+See `INSTALLDIR/walt.json` for a sample configuration.
 
 Development
 -----------
 
-See the [Wiki](https://github.com/svenjacobs/BuildJS/wiki/) for some information on
-how to develop plugins for BuildJS.
+See the [Wiki](https://github.com/svenjacobs/Walt/wiki/) for some information on
+how to develop plugins for Walt.
+
+Why the name?
+-------------
+
+At first this application was called BuildJS. However a module with that name
+already exists in the npm registry so I named the application after the protagonist
+of my favourite TV show [Breaking Bad](http://en.wikipedia.org/wiki/Breaking_Bad) ;-)
+
+You may also think of walt as an acronym for "website analyzing tool", "website
+awesome lint tool" or whatever :-)

@@ -1,9 +1,9 @@
 {
-    "name": "buildjs",
-    "version": "0.1.0",
+    "name": "walt",
+    "version": "0.1.1",
     "description": "Simple build tool for static web apps, Google Chrome extensions etc.",
-    "homepage": "https://github.com/svenjacobs/BuildJS",
-    "bugs": "https://github.com/svenjacobs/BuildJS/issues",
+    "homepage": "https://github.com/svenjacobs/walt",
+    "bugs": "https://github.com/svenjacobs/walt/issues",
     "author": {
         "name": "Sven Jacobs",
         "email": "mail@svenjacobs.com",
@@ -26,10 +26,10 @@
     "repositories": [
         {
             "type": "git",
-            "url": "https://github.com/svenjacobs/BuildJS.git"
+            "url": "https://github.com/svenjacobs/walt.git"
         }
     ],
-    "main": "./lib/build.js",
+    "main": "./lib/walt.js",
     "bin": "./bin/cli.js",
     "dependencies": {
         "underscore": "~1.3.1",

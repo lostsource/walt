@@ -2,12 +2,12 @@
 /*jshint browser: true, node: true, plusplus: false*/
 
 (function () {
-    var buildjs = require('../lib/build.js'),
+    var walt = require('../lib/walt.js'),
         ignore = [],
         i;
 
     if (process.argv.length < 4) {
-        console.log('Usage: build.js SOURCE DESTINATION [IGNORE...]\n');
+        console.log('Usage: walt SOURCE DESTINATION [IGNORE...]\n');
         console.log('SOURCE      Source directory.');
         console.log('DESTINATION Destination directory.');
         console.log('IGNORE      Any further argument is a relative path (file or directory)');
@@ -20,5 +20,5 @@
         ignore.push(process.argv[i]);
     }
 
-    new buildjs.BuildJS(process.argv[2], process.argv[3], ignore).run();
+    new walt.Walt(process.argv[2], process.argv[3], ignore).run();
 }());

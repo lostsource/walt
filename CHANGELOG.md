@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.1.1 (09.02.2012)
+------------------
+
+* Renamed BuildJS to Walt and published it to the npm registry
+
 0.1.0 (08.02.2012)
 ------------------
 

@@ -2,7 +2,7 @@
 
 (function () {
     var assert = require('assert'),
-        buildjs = require('../lib/build.js'),
+        walt = require('../lib/walt.js'),
 
         foo = {
             a: {
@@ -24,7 +24,7 @@
 
         Test = function () {};
 
-    Test.prototype.merge = buildjs.BuildJS.prototype.merge;
+    Test.prototype.merge = walt.Walt.prototype.merge;
 
     assert.deepEqual(new Test().merge(foo, bar), {
         a: {
