@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.1.0 (08.02.2012)
+------------------
+
+* Restructuring according to CommonJS specifications
+* Added package.json
+* Removed cloneextend dependency
+
 0.0.3 (06.02.2012)
 ------------------
 
