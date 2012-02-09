@@ -65,7 +65,7 @@ See `INSTALLDIR/walt.json` for a sample configuration.
 Development
 -----------
 
-See the [Wiki](https://github.com/svenjacobs/Walt/wiki/) for some information on
+See the [Wiki](https://github.com/svenjacobs/walt/wiki/) for some information on
 how to develop plugins for Walt.
 
 Why the name?
