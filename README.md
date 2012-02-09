@@ -7,7 +7,7 @@ and compilations/minifications on JavaScript and CSS files and finally creates a
 packaged version of the web app in an output directory while the source contents
 stays untouched.
 
-![Walt in action](http://svenjacobs.github.com/walt/buildjs.png "Walt in action")
+![Walt in action](http://svenjacobs.github.com/walt/walt.png "Walt in action")
 
 Installation
 ------------
