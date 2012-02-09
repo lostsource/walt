@@ -3,9 +3,11 @@ Walt
 
 Walt is a simple [node.js](http://nodejs.org/) based build tool for static web
 apps, Google Chrome extensions etc. It parses a directory structure, runs checks
-and compilations/minifications on JavaScript and CSS files and finally creates a
-packaged version of the web app in an output directory while the source contents
+and compilations/minifications on JavaScript, CSS and HTML files and finally creates 
+a packaged version of the web app in an output directory while the source contents
 stays untouched.
+
+Walt is configurable and extensible through plugins.
 
 ![Walt in action](http://svenjacobs.github.com/walt/walt.png "Walt in action")
 
