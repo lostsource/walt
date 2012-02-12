@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.1.2 (12.02.2012)
+------------------
+
+* Separated logging functionality from walt.js to cli.js. Now using events for internal states
+
 0.1.1 (09.02.2012)
 ------------------
 

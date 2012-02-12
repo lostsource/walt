@@ -4,7 +4,16 @@
 (function () {
     var walt = require('../lib/walt.js'),
         ignore = [],
-        i;
+        i,
+        w;
+
+    function logline(level, args) {
+        if (args.plugin) {
+            return '[' + level.toUpperCase() + ' ' + args.plugin + '] ' + args.msg;
+        } else {
+            return '[' + level.toUpperCase() + '] ' + args.msg;
+        }
+    }
 
     if (process.argv.length < 4) {
         console.log('Usage: walt SOURCE DESTINATION [IGNORE...]\n');
@@ -20,5 +29,34 @@
         ignore.push(process.argv[i]);
     }
 
-    new walt.Walt(process.argv[2], process.argv[3], ignore).run();
+    w = new walt.Walt(process.argv[2], process.argv[3], ignore);
+
+    w.on('started', function (version) {
+        console.log(logline('INFO', {msg: 'Walt version %s started'}), version);
+    });
+
+    w.on('info', function (args) {
+        console.log(logline('INFO', args), args.args ? args.args : undefined);
+    });
+
+    w.on('warning', function (args) {
+        console.log(logline('WARNING', args), args.args ? args.args : undefined);
+    });
+
+    w.on('error', function (args) {
+        console.error(logline('ERROR', args), args.args ? args.args : undefined);
+    });
+
+    w.on('copy', function (from, to) {
+        console.log(logline('COPY', {msg: '%s -> %s'}), from, to);
+    });
+
+    w.on('apply', function (plugin, from, to) {
+        console.log(logline('APPLY', {
+            plugin: plugin,
+            msg: '%s -> %s'
+        }), from, to);
+    });
+
+    w.run();
 }());

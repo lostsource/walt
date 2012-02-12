@@ -1,6 +1,6 @@
 {
     "name": "walt",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Simple build tool for static web apps, Google Chrome extensions etc.",
     "homepage": "https://github.com/svenjacobs/walt",
     "bugs": "https://github.com/svenjacobs/walt/issues",
