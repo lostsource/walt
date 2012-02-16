@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.0 (16.02.2012)
+------------------
+
+* Optimized plugin loading & initialization
+* JavaScript plugin is now using UglifyJS by default (can be switched to Closure Compiler)
+
 0.1.2 (12.02.2012)
 ------------------
 

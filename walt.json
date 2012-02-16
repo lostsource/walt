@@ -8,7 +8,9 @@
 
     "plugins": {
         "javascript": {
-            "enabled": true
+            "enabled": true,
+            "method": "uglifyjs" // Method can either be "uglifyjs" 
+                                 // or "closure" (for Google Closure Compiler)
         },
         "css": {
             "enabled": true
